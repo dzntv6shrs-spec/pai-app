@@ -7,17 +7,18 @@
 import {
   getProfile, saveProfile, getLogs, setLogs,
   getSession, setSession, clearSession,
+  getWeekStart, setWeekStart, hasWeekStart,
   type ActivityLog, type ProfileFull,
 } from './storage';
 
 const ENDPOINT = '/.netlify/functions/sync';
 
-export type CloudData = { profile?: ProfileFull | null; logs?: ActivityLog[] };
+export type CloudData = { profile?: ProfileFull | null; logs?: ActivityLog[]; weekStart?: number };
 type Action = 'login' | 'save';
 type CloudResponse = { ok: boolean; reason?: string; created?: boolean; data?: CloudData };
 
 function gatherLocal(): CloudData {
-  return { profile: getProfile(), logs: getLogs() };
+  return { profile: getProfile(), logs: getLogs(), weekStart: getWeekStart() };
 }
 
 async function call(action: Action, user: string, pin: string, data?: CloudData): Promise<CloudResponse> {
@@ -62,7 +63,10 @@ export async function cloudLogin(user: string, pin: string): Promise<CloudRespon
   const mergedProfile = cloud.profile || local.profile || null;
   if (mergedProfile) saveProfile(mergedProfile);
   setLogs(mergedLogs);
-  await call('save', user, pin, { profile: mergedProfile, logs: mergedLogs });
+  // Wochenstart aus der Cloud übernehmen, wenn lokal noch keiner gewählt wurde
+  if (cloud.weekStart != null && !hasWeekStart()) setWeekStart(cloud.weekStart);
+  const mergedWeekStart = hasWeekStart() ? getWeekStart() : (cloud.weekStart ?? undefined);
+  await call('save', user, pin, { profile: mergedProfile, logs: mergedLogs, weekStart: mergedWeekStart });
   return r;
 }
 

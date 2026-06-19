@@ -1,7 +1,7 @@
 {
-  "name": "PAI – Persönliche Aktivität",
-  "short_name": "PAI",
-  "description": "Dein wöchentlicher Aktivitäts-Score",
+  "name": "Weekly Points – Aktivitätspunkte",
+  "short_name": "Weekly Points",
+  "description": "Dein wöchentlicher Aktivitäts-Punktezähler",
   "start_url": "/",
   "display": "browser",
   "background_color": "#0d0d14",

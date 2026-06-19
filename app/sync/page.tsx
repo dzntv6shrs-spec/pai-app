@@ -67,7 +67,7 @@ function SyncInner() {
             <div className="w-16 h-16 rounded-full flex items-center justify-center text-2xl mx-auto mb-3"
               style={{ background: 'linear-gradient(135deg, #ff6b8a, #ff8c69)' }}>✓</div>
             <h2 className="text-xl font-bold">Synchronisiert</h2>
-            <p className="text-3xl font-bold mt-1" style={{ color: '#ff6b8a' }}>+{data.pai_points} PAI</p>
+            <p className="text-3xl font-bold mt-1" style={{ color: '#ff6b8a' }}>+{data.pai_points} Punkte</p>
           </div>
           <div className="rounded-2xl p-4 text-sm" style={{ background: 'var(--card)' }}>
             <p className="font-semibold mb-3" style={{ color: 'var(--muted)' }}>Empfangene Daten</p>

@@ -51,12 +51,11 @@ export interface PAIBreakdown {
   total: number;
 }
 
-// Liefert die PAI-Beiträge pro Kategorie (für die Anzeige in den Kästchen)
+// Liefert die Punkte für einen Tag.
+// WICHTIG: Punkte gibt es ausschließlich fürs Training – basierend auf der
+// Herzfrequenz-Intensität. Schritte, Kalorien, Schlaf usw. geben KEINE Punkte
+// (sie dienen nur der Übersicht).
 export function calculatePAIBreakdown(data: DayData, profile: Profile): PAIBreakdown {
-  const steps = Math.min(Math.max(data.steps, 0), 50000);
-  const sleepHours = Math.min(Math.max(data.sleep_hours, 0), 14);
-
-  // Workouts (Hauptquelle der PAI-Punkte) — basiert auf Herzfrequenz-Intensität
   let workout = 0;
   for (const w of data.workouts) {
     const minutes = Math.min(w.duration_minutes, 180); // max 3h pro Einheit
@@ -65,20 +64,12 @@ export function calculatePAIBreakdown(data: DayData, profile: Profile): PAIBreak
     }
   }
 
-  // Schritte: sehr kleiner Beitrag — nur für normale Alltagsbewegung
-  const stepsPts = (steps / 10000) * 1.0;
-
-  // Schlaf-Bonus: nur wenn gut geschlafen
-  let sleepPts = 0;
-  if (sleepHours >= 7 && sleepHours <= 9) sleepPts = 2;
-  else if (sleepHours >= 6) sleepPts = 0.5;
-
-  const total = Math.min(workout + stepsPts + sleepPts, DAILY_CAP);
+  const total = Math.min(workout, DAILY_CAP);
 
   return {
-    workout: Math.round(workout),
-    steps: Math.round(stepsPts),
-    sleep: Math.round(sleepPts),
+    workout: Math.round(total),
+    steps: 0, // keine Punkte mehr
+    sleep: 0, // keine Punkte mehr
     total: Math.round(total),
   };
 }

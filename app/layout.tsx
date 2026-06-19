@@ -2,12 +2,12 @@ import type { Metadata, Viewport } from "next";
 import "./globals.css";
 
 export const metadata: Metadata = {
-  title: "PAI – Meine Aktivität",
-  description: "Dein persönlicher Aktivitäts-Score",
+  title: "Weekly Points – Aktivitätspunkte",
+  description: "Dein wöchentlicher Aktivitäts-Punktezähler",
   manifest: "/manifest.json",
   appleWebApp: {
     capable: false,
-    title: "PAI",
+    title: "Weekly Points",
   },
 };
 

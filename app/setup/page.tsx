@@ -4,18 +4,28 @@ import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import BottomNav from '../components/BottomNav';
 import CloudLogin from '../components/CloudLogin';
-import { getProfile, saveProfile } from '@/lib/storage';
+import { getProfile, saveProfile, getWeekStart, setWeekStart } from '@/lib/storage';
 import { cloudAutoSave } from '@/lib/cloud';
+
+const WEEK_DAYS = ['So', 'Mo', 'Di', 'Mi', 'Do', 'Fr', 'Sa'];
 
 export default function Setup() {
   const router = useRouter();
   const [saved, setSaved] = useState(false);
   const [form, setForm] = useState({ name: '', age: '', sex: 'female', resting_hr: '' });
+  const [weekStart, setWeekStartState] = useState(1);
 
   useEffect(() => {
     const p = getProfile();
     if (p) setForm({ name: p.name ?? '', age: String(p.age), sex: p.sex, resting_hr: String(p.resting_hr) });
+    setWeekStartState(getWeekStart());
   }, []);
+
+  const chooseWeekStart = (day: number) => {
+    setWeekStartState(day);
+    setWeekStart(day);
+    cloudAutoSave();
+  };
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -56,7 +66,7 @@ export default function Setup() {
       <div className="fade-in">
         <h1 className="text-2xl font-bold">Profil</h1>
         <p className="text-sm mt-1" style={{ color: 'var(--muted)' }}>
-          Deine Daten für die PAI-Berechnung
+          Deine Daten für die Punkteberechnung
         </p>
       </div>
 
@@ -97,6 +107,32 @@ export default function Setup() {
           <input style={inputStyle} type="number" inputMode="numeric" value={form.resting_hr} onChange={(e) => setForm({ ...form, resting_hr: e.target.value })} placeholder="z.B. 62" required />
           <p className="text-xs mt-2" style={{ color: 'var(--muted)' }}>
             Morgens messen bevor du aufstehst — oder aus Apple Health ablesen.
+          </p>
+        </div>
+
+        <div>
+          <label style={labelStyle}>Wochenstart</label>
+          <div className="flex gap-2">
+            {WEEK_DAYS.map((d, i) => (
+              <button
+                key={i}
+                type="button"
+                onClick={() => chooseWeekStart(i)}
+                className="flex-1 py-3 rounded-xl font-medium transition-all"
+                style={{
+                  background: weekStart === i ? 'linear-gradient(135deg, #ff6b8a, #ff8c69)' : 'var(--card)',
+                  color: weekStart === i ? '#fff' : 'var(--muted)',
+                  border: '1px solid var(--border)',
+                  fontSize: 13,
+                  padding: '10px 0',
+                }}
+              >
+                {d}
+              </button>
+            ))}
+          </div>
+          <p className="text-xs mt-2" style={{ color: 'var(--muted)' }}>
+            An diesem Tag startet der 7-Tage-Zähler neu bei 0. Wird sofort gespeichert.
           </p>
         </div>
 

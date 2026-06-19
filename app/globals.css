@@ -6,20 +6,49 @@
 
 :root {
   --bg: #0d0d14;
-  --card: #1a1a2e;
+  --bg-soft: #11111c;
+  --card: #16161f;
+  --card-2: #1c1c2a;
+  --border: rgba(255, 255, 255, 0.07);
   --accent: #ff6b8a;
   --accent2: #ff8c69;
-  --muted: #8888aa;
+  --muted: #8b8ba6;
+  --good: #7dd1a6;
 }
 
 body {
   background-color: var(--bg);
+  /* dezenter Farbschimmer oben fuer mehr Tiefe */
+  background-image: radial-gradient(120% 60% at 50% -10%, rgba(255, 107, 138, 0.14), transparent 60%);
+  background-attachment: fixed;
   color: #f0f0f0;
   font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Display', 'Segoe UI', sans-serif;
   min-height: 100vh;
   max-width: 430px;
   margin: 0 auto;
   overflow-x: hidden;
+}
+
+/* ── Wiederverwendbare Bausteine ── */
+.card {
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: 20px;
+}
+.grad {
+  background: linear-gradient(135deg, var(--accent), var(--accent2));
+}
+.grad-text {
+  background: linear-gradient(135deg, var(--accent), var(--accent2));
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+}
+.chip {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 12px;
 }
 
 @keyframes fade-in {

@@ -14,6 +14,7 @@ export type ActivityLog = {
 const PROFILE_KEY = 'pai_profile';
 const LOGS_KEY = 'pai_logs';
 const SESSION_KEY = 'pai_cloud_session';
+const WEEKSTART_KEY = 'pai_week_start';
 
 export type ProfileFull = Profile & { name: string };
 
@@ -32,6 +33,25 @@ export function setSession(s: CloudSession): void {
 
 export function clearSession(): void {
   localStorage.removeItem(SESSION_KEY);
+}
+
+// ── Wochenstart (Tag, an dem der 7-Tage-Zähler neu beginnt) ──
+// 0=Sonntag, 1=Montag, … 6=Samstag. Default Montag = bisheriges Verhalten.
+export function getWeekStart(): number {
+  if (typeof window === 'undefined') return 1;
+  const raw = localStorage.getItem(WEEKSTART_KEY);
+  if (raw === null) return 1;
+  const n = Number(raw);
+  return Number.isInteger(n) && n >= 0 && n <= 6 ? n : 1;
+}
+
+export function hasWeekStart(): boolean {
+  if (typeof window === 'undefined') return false;
+  return localStorage.getItem(WEEKSTART_KEY) !== null;
+}
+
+export function setWeekStart(day: number): void {
+  localStorage.setItem(WEEKSTART_KEY, String(day));
 }
 
 // Ersetzt alle Logs (fuer den Cloud-Merge). Wie saveLog: sortiert + auf 90 Tage gekuerzt.
@@ -91,20 +111,76 @@ export function saveLog(entry: Omit<ActivityLog, 'pai_points'>): ActivityLog {
   return log;
 }
 
-export function getWeekLogs(): ActivityLog[] {
-  const logs = getLogs();
-  const today = new Date();
-  const dayOfWeek = today.getDay(); // 0=So, 1=Mo, ..., 6=Sa
-  const daysFromMonday = dayOfWeek === 0 ? 6 : dayOfWeek - 1;
-  const monday = new Date(today);
-  monday.setDate(today.getDate() - daysFromMonday);
-  monday.setHours(0, 0, 0, 0);
-  const mondayStr = monday.toISOString().split('T')[0];
-  return logs.filter((l) => l.date >= mondayStr);
+// ── Wochen-Fenster (für aktuelle Woche und Vorwochen-Statistik) ──
+function dateStr(d: Date): string {
+  const y = d.getFullYear();
+  const m = String(d.getMonth() + 1).padStart(2, '0');
+  const day = String(d.getDate()).padStart(2, '0');
+  return `${y}-${m}-${day}`;
 }
 
-export function getWeeklyPAI(): number {
-  const week = getWeekLogs();
-  const total = week.reduce((sum, l) => sum + l.pai_points, 0);
-  return Math.round(total);
+function parseDate(s: string): Date {
+  return new Date(s + 'T12:00:00'); // Mittags = robust gegen Zeitzonen
+}
+
+function startOfWeek(ref: Date, weekStart: number): Date {
+  const d = new Date(ref);
+  d.setHours(12, 0, 0, 0);
+  const diff = (d.getDay() - weekStart + 7) % 7;
+  d.setDate(d.getDate() - diff);
+  return d;
+}
+
+// Datumsbereich einer Woche. offset 0 = aktuelle Woche, -1 = Vorwoche, …
+export function getWeekRange(offset = 0): { start: string; end: string } {
+  const start = startOfWeek(new Date(), getWeekStart());
+  start.setDate(start.getDate() + offset * 7);
+  const end = new Date(start);
+  end.setDate(start.getDate() + 6);
+  return { start: dateStr(start), end: dateStr(end) };
+}
+
+export function getWeekLogs(offset = 0): ActivityLog[] {
+  const { start, end } = getWeekRange(offset);
+  return getLogs()
+    .filter((l) => l.date >= start && l.date <= end)
+    .sort((a, b) => a.date.localeCompare(b.date));
+}
+
+export function getWeeklyPAI(offset = 0): number {
+  return Math.round(getWeekLogs(offset).reduce((sum, l) => sum + l.pai_points, 0));
+}
+
+// Wie viele Wochen zurück Daten existieren (>=0). Steuert die Vorwochen-Navigation.
+export function getWeeksBack(): number {
+  const logs = getLogs();
+  if (!logs.length) return 0;
+  const ws = getWeekStart();
+  const curStart = startOfWeek(new Date(), ws);
+  const earlyStart = startOfWeek(parseDate(logs[0].date), ws);
+  const diffDays = Math.round((curStart.getTime() - earlyStart.getTime()) / 86400000);
+  return Math.max(0, Math.round(diffDays / 7));
+}
+
+// Punkte aller gespeicherten Tage mit aktueller Profil-/Punktelogik neu berechnen
+// (z. B. nachdem sich die Punkteregel oder das Profil geändert hat).
+export function recalcLogs(): void {
+  const profile = getProfile();
+  if (!profile) return;
+  const logs = getLogs();
+  let changed = false;
+  for (const l of logs) {
+    const dayData: DayData = {
+      steps: l.steps,
+      active_calories: l.active_calories,
+      workouts: l.avg_workout_hr && l.exercise_minutes
+        ? [{ duration_minutes: l.exercise_minutes, avg_hr: l.avg_workout_hr }]
+        : [],
+      sleep_hours: l.sleep_hours,
+      stand_hours: l.stand_hours,
+    };
+    const p = calculateDayPAI(dayData, profile);
+    if (p !== l.pai_points) { l.pai_points = p; changed = true; }
+  }
+  if (changed) localStorage.setItem(LOGS_KEY, JSON.stringify(logs));
 }

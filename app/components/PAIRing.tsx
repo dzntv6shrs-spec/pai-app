@@ -16,46 +16,35 @@ export default function PAIRing({ current, goal, size = 220 }: PAIRingProps) {
   return (
     <div className="relative flex items-center justify-center" style={{ width: size, height: size }}>
       <svg width={size} height={size} className="-rotate-90">
-        {/* Background ring */}
-        <circle
-          cx={center}
-          cy={center}
-          r={radius}
-          fill="none"
-          stroke="#1a1a2e"
-          strokeWidth="14"
-        />
-        {/* Glow effect */}
+        {/* Hintergrund-Ring */}
+        <circle cx={center} cy={center} r={radius} fill="none" stroke="rgba(255,255,255,0.06)" strokeWidth="16" />
+        {/* Fortschritt */}
         <circle
           cx={center}
           cy={center}
           r={radius}
           fill="none"
           stroke="url(#glowGradient)"
-          strokeWidth="14"
+          strokeWidth="16"
           strokeLinecap="round"
           strokeDasharray={circumference}
           strokeDashoffset={offset}
           className="ring-animate"
-          style={{ filter: 'drop-shadow(0 0 8px #ff6b8a)' }}
+          style={{ filter: 'drop-shadow(0 0 10px rgba(255,107,138,0.55))' }}
         />
         <defs>
-          <linearGradient id="glowGradient" x1="0%" y1="0%" x2="100%" y2="0%">
+          <linearGradient id="glowGradient" x1="0%" y1="0%" x2="100%" y2="100%">
             <stop offset="0%" stopColor="#ff6b8a" />
             <stop offset="100%" stopColor="#ff8c69" />
           </linearGradient>
         </defs>
       </svg>
-      {/* Center text */}
+      {/* Mittiger Text */}
       <div className="absolute flex flex-col items-center justify-center">
-        <span className="text-5xl font-bold tracking-tight" style={{ color: '#f0f0f0' }}>
-          {Math.round(current)}
-        </span>
-        <span className="text-sm mt-1" style={{ color: '#8888aa' }}>
-          von {goal} PAI
-        </span>
+        <span className="text-6xl font-bold tracking-tight grad-text">{Math.round(current)}</span>
+        <span className="text-sm mt-1" style={{ color: 'var(--muted)' }}>von {goal} Punkten</span>
         {progress >= 1 && (
-          <span className="text-xs mt-1" style={{ color: '#ff6b8a' }}>Ziel erreicht ✓</span>
+          <span className="text-xs mt-1 font-semibold" style={{ color: 'var(--accent)' }}>Ziel erreicht ✓</span>
         )}
       </div>
     </div>
