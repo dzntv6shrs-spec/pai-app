@@ -27,9 +27,12 @@ function SyncInner() {
   const [raw, setRaw] = useState<RawDiag | null>(null);
 
   useEffect(() => {
-    const key = params.get('key');
-    const expectedKey = process.env.NEXT_PUBLIC_SYNC_KEY;
-    if (expectedKey && key !== expectedKey) { setStatus('error'); return; }
+    // Schlüssel-Prüfung vorübergehend deaktiviert (auf Wunsch), um Reibung beim
+    // Einrichten zu vermeiden. SPÄTER wieder aktivieren, sobald jeder Nutzer einen
+    // eigenen Speicher + Schlüssel hat (Mehrbenutzer):
+    // const key = params.get('key');
+    // const expectedKey = process.env.NEXT_PUBLIC_SYNC_KEY;
+    // if (expectedKey && key !== expectedKey) { setStatus('error'); return; }
 
     // ── DIAGNOSE: rohe Werte erfassen, bevor irgendetwas begrenzt wird ──
     const rawHr = params.get('hr');
