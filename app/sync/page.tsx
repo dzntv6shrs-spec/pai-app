@@ -3,6 +3,7 @@
 import { useEffect, useState } from 'react';
 import { useSearchParams, useRouter } from 'next/navigation';
 import { saveLog } from '@/lib/storage';
+import { cloudAutoSave } from '@/lib/cloud';
 import { Suspense } from 'react';
 
 type ReceivedData = {
@@ -39,6 +40,7 @@ function SyncInner() {
     const stand = Math.min(Math.round(Number(params.get('stand') ?? 0)), 16);
 
     const log = saveLog({ date, steps, active_calories: cal, exercise_minutes: ex_min, avg_workout_hr: hr, sleep_hours: sleep, stand_hours: stand });
+    cloudAutoSave(); // falls angemeldet: neuen Tagesstand in die Cloud sichern
 
     setData({ date, steps, cal, ex_min, hr, sleep, stand, pai_points: log.pai_points });
     setStatus('success');

@@ -4,3 +4,9 @@
 
 [[plugins]]
   package = "@netlify/plugin-nextjs"
+
+# Eigenstaendige Function fuer den Cloud-Login (Netlify Blobs).
+# Laeuft unabhaengig vom statischen Next-Export unter /.netlify/functions/sync
+[functions]
+  directory = "netlify/functions"
+  node_bundler = "esbuild"

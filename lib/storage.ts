@@ -13,6 +13,32 @@ export type ActivityLog = {
 
 const PROFILE_KEY = 'pai_profile';
 const LOGS_KEY = 'pai_logs';
+const SESSION_KEY = 'pai_cloud_session';
+
+export type ProfileFull = Profile & { name: string };
+
+// ── Cloud-Session (liegt nur lokal auf dem eigenen Geraet) ──
+export type CloudSession = { user: string; pin: string };
+
+export function getSession(): CloudSession | null {
+  if (typeof window === 'undefined') return null;
+  const raw = localStorage.getItem(SESSION_KEY);
+  return raw ? JSON.parse(raw) : null;
+}
+
+export function setSession(s: CloudSession): void {
+  localStorage.setItem(SESSION_KEY, JSON.stringify(s));
+}
+
+export function clearSession(): void {
+  localStorage.removeItem(SESSION_KEY);
+}
+
+// Ersetzt alle Logs (fuer den Cloud-Merge). Wie saveLog: sortiert + auf 90 Tage gekuerzt.
+export function setLogs(logs: ActivityLog[]): void {
+  const trimmed = [...logs].sort((a, b) => a.date.localeCompare(b.date)).slice(-90);
+  localStorage.setItem(LOGS_KEY, JSON.stringify(trimmed));
+}
 
 export function getProfile(): Profile & { name: string } | null {
   if (typeof window === 'undefined') return null;

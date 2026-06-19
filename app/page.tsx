@@ -1,9 +1,10 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import PAIRing from './components/PAIRing';
 import BottomNav from './components/BottomNav';
-import { getProfile, getWeekLogs, getWeeklyPAI, type ActivityLog } from '@/lib/storage';
+import { getProfile, getWeekLogs, getWeeklyPAI, getSession, type ActivityLog } from '@/lib/storage';
+import { cloudPull } from '@/lib/cloud';
 import { calculatePAIBreakdown, type Profile } from '@/lib/pai';
 
 function getDayName(dateStr: string) {
@@ -46,14 +47,23 @@ export default function Dashboard() {
   const [profile, setProfile] = useState<Profile | null>(null);
   const [hasProfile, setHasProfile] = useState(true);
 
-  useEffect(() => {
+  const loadLocal = useCallback(() => {
     const p = getProfile();
     if (!p) { setHasProfile(false); return; }
+    setHasProfile(true);
     setName(p.name ?? '');
     setProfile(p);
     setLogs(getWeekLogs());
     setWeeklyPAI(getWeeklyPAI());
   }, []);
+
+  useEffect(() => {
+    loadLocal();
+    // Falls angemeldet: aktuellen Stand aus der Cloud holen (z.B. nach Geraetewechsel)
+    if (getSession()) {
+      cloudPull().then(() => loadLocal()).catch(() => {});
+    }
+  }, [loadLocal]);
 
   const today = logs.at(-1);
   const breakdown = today && profile

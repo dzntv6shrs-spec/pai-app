@@ -3,7 +3,9 @@
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import BottomNav from '../components/BottomNav';
+import CloudLogin from '../components/CloudLogin';
 import { getProfile, saveProfile } from '@/lib/storage';
+import { cloudAutoSave } from '@/lib/cloud';
 
 export default function Setup() {
   const router = useRouter();
@@ -23,6 +25,7 @@ export default function Setup() {
       sex: form.sex as 'male' | 'female',
       resting_hr: Number(form.resting_hr),
     });
+    cloudAutoSave(); // falls angemeldet: Profil-Aenderung in die Cloud sichern
     setSaved(true);
     setTimeout(() => { setSaved(false); router.push('/'); }, 1500);
   };
@@ -109,6 +112,8 @@ export default function Setup() {
           {saved ? '✓ Gespeichert' : 'Speichern'}
         </button>
       </form>
+
+      <CloudLogin />
 
       <BottomNav />
     </main>
