@@ -17,17 +17,25 @@ type ReceivedData = {
   pai_points: number;
 };
 
+type RawDiag = { hr: string | null; all: [string, string][] };
+
 function SyncInner() {
   const params = useSearchParams();
   const router = useRouter();
   const [status, setStatus] = useState<'loading' | 'success' | 'error'>('loading');
   const [data, setData] = useState<ReceivedData | null>(null);
-  const [countdown, setCountdown] = useState(6);
+  const [raw, setRaw] = useState<RawDiag | null>(null);
 
   useEffect(() => {
     const key = params.get('key');
     const expectedKey = process.env.NEXT_PUBLIC_SYNC_KEY;
     if (expectedKey && key !== expectedKey) { setStatus('error'); return; }
+
+    // ── DIAGNOSE: rohe Werte erfassen, bevor irgendetwas begrenzt wird ──
+    const rawHr = params.get('hr');
+    const allRaw: [string, string][] = [];
+    params.forEach((value, k) => { if (k !== 'key') allRaw.push([k, value]); });
+    setRaw({ hr: rawHr, all: allRaw });
 
     const date = params.get('date') ?? new Date().toISOString().split('T')[0];
 
@@ -44,21 +52,11 @@ function SyncInner() {
 
     setData({ date, steps, cal, ex_min, hr, sleep, stand, pai_points: log.pai_points });
     setStatus('success');
-
-    let secs = 6;
-    const interval = setInterval(() => {
-      secs -= 1;
-      setCountdown(secs);
-      if (secs <= 0) {
-        clearInterval(interval);
-        router.push('/');
-      }
-    }, 1000);
-    return () => clearInterval(interval);
-  }, [params, router]);
+    // Hinweis: Auto-Weiterleitung ist während der Diagnose absichtlich deaktiviert.
+  }, [params]);
 
   return (
-    <main className="min-h-screen flex flex-col items-center justify-center px-6" style={{ background: 'var(--bg)' }}>
+    <main className="min-h-screen flex flex-col items-center justify-center px-6 py-10" style={{ background: 'var(--bg)' }}>
       {status === 'loading' && <p style={{ color: 'var(--muted)' }}>Synchronisiere...</p>}
       {status === 'error' && <p className="text-xl">Ungültiger Schlüssel</p>}
       {status === 'success' && data && (
@@ -69,8 +67,33 @@ function SyncInner() {
             <h2 className="text-xl font-bold">Synchronisiert</h2>
             <p className="text-3xl font-bold mt-1" style={{ color: '#ff6b8a' }}>+{data.pai_points} Punkte</p>
           </div>
+
+          {/* ── DIAGNOSE-BOX (vorübergehend) ── */}
+          {raw && (
+            <div className="rounded-2xl p-4 text-sm mb-4" style={{ background: 'var(--card)', border: '1px solid var(--accent)' }}>
+              <p className="font-semibold mb-3" style={{ color: 'var(--accent)' }}>🔎 Diagnose (roh empfangen)</p>
+              <div className="flex justify-between mb-2">
+                <span style={{ color: 'var(--muted)' }}>hr (roh, ungekürzt)</span>
+                <span className="font-bold" style={{ color: '#fff' }}>{raw.hr ?? '— (fehlt)'}</span>
+              </div>
+              <div className="flex justify-between mb-3">
+                <span style={{ color: 'var(--muted)' }}>hr (von App verwendet)</span>
+                <span className="font-medium">{data.hr} bpm</span>
+              </div>
+              <p className="text-xs mb-1" style={{ color: 'var(--muted)' }}>Alle empfangenen Parameter:</p>
+              <div className="flex flex-col gap-1" style={{ fontFamily: 'monospace', fontSize: 12 }}>
+                {raw.all.map(([k, v]) => (
+                  <div key={k} className="flex justify-between gap-3">
+                    <span style={{ color: 'var(--muted)' }}>{k}</span>
+                    <span className="text-right break-all">{v}</span>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+
           <div className="rounded-2xl p-4 text-sm" style={{ background: 'var(--card)' }}>
-            <p className="font-semibold mb-3" style={{ color: 'var(--muted)' }}>Empfangene Daten</p>
+            <p className="font-semibold mb-3" style={{ color: 'var(--muted)' }}>Übernommene Werte</p>
             <div className="flex flex-col gap-2">
               {([
                 ['Datum', data.date],
@@ -88,11 +111,16 @@ function SyncInner() {
               ))}
             </div>
           </div>
-          <div className="flex flex-col items-center mt-5 gap-2">
-            <div className="w-10 h-10 rounded-full flex items-center justify-center text-lg font-bold"
-              style={{ background: 'var(--card)', color: 'var(--accent)' }}>{countdown}</div>
-            <p className="text-xs" style={{ color: 'var(--muted)' }}>Weiterleitung zur App...</p>
-          </div>
+
+          <button
+            onClick={() => router.push('/')}
+            className="mt-5 w-full py-3 rounded-2xl font-semibold text-white grad"
+          >
+            Weiter zur App
+          </button>
+          <p className="text-xs text-center mt-2" style={{ color: 'var(--muted)' }}>
+            Auto-Weiterleitung ist für die Diagnose pausiert.
+          </p>
         </div>
       )}
     </main>
